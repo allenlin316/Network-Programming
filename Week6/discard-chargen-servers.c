@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 #include <winsock.h>
 
 #define MAXLINE 1024    /* 字串緩衝區長度 */
@@ -20,6 +21,8 @@ int main()
     char  str[MAXLINE];
     int   n;
     int port;
+    int total=0;
+    time_t start, in_loop;
     WSADATA wsadata;
 
     // 呼叫 WSAStartup() 註冊 WinSock DLL 的使用
@@ -27,73 +30,55 @@ int main()
         fprintf(stderr,"echo_srv: WSAStartup() fails!");
         exit(1);
     }
-    strcpy(str, "127.0.0.1");
-    port = 9;
-
-    // 填寫 sockaddr_in 結構 (serv) 。
-   // 內容包括：server 的 IP 位址，port number 等等。
-    serv.sin_family       = AF_INET;
-    serv.sin_addr.s_addr  = inet_addr(str);
-    serv.sin_port         = htons(port);
-
-    if ( (sd=socket(AF_INET, SOCK_STREAM, 0)) == SOCKET_ERROR) {
+    // set up discard server
+    serv.sin_family = AF_INET;
+    serv.sin_addr.s_addr = inet_addr("127.0.0.1");
+    serv.sin_port = htons(9); // discard-server port
+    if( (sd = socket(AF_INET, SOCK_STREAM, 0)) == SOCKET_ERROR){
         fprintf(stderr,"discard_cli: can't open tcp socket\n");
         exit(1);
     }
-    // 連接至 discard server
-    if ( connect(sd, (LPSOCKADDR) &serv, sizeof(serv)) == SOCKET_ERROR) {
-        fprintf(stderr, "discard_cli: can't connect to discard server\n");
+    if(connect(sd, (struct sockaddr *) &serv, sizeof(serv)) == SOCKET_ERROR){
+        fprintf(stderr, "discard_cli: can't connect to echo server\n");
         exit(1);
     }
-    for(int i=0; i<10; i++){
-        Sleep(100);
-        strcpy(str,"127.0.0.1");
-        port = 19;
-        /*
-        * 填寫 sockaddr_in 結構 (serv) 。
-        * 內容包括：server 的 IP 位址，port number 等等。
-        */
-        serv2.sin_family       = AF_INET;
-        serv2.sin_addr.s_addr  = inet_addr(str);
-        serv2.sin_port         = htons(port);
 
-        if ( (sd2=socket(AF_INET, SOCK_STREAM, 0)) == SOCKET_ERROR) {
-            fprintf(stderr,"chargen_cli: can't open tcp socket\n");
-            exit(1);
-        }
-        /*
-        * 連接至 chargen server
-        */
-        if ( connect(sd2, (LPSOCKADDR) &serv2, sizeof(serv2)) == SOCKET_ERROR) {
-            fprintf(stderr, "chargen_cli: can't connect to chargen server\n");
-            exit(1);
-        }
-        n=recv(sd2, str, MAXLINE, 0);
-        while( n!= 0 ) {
-            if (n==SOCKET_ERROR) {
-              fprintf(stderr,"chargen_cli: recv() error!\n");
-              break;
-            }
-            else{
-                str[n]='\0';
-                printf("chargen client recv: \n%s", str);
-                break;
-            }
-            n=recv(sd2, str, MAXLINE, 0);
-        }
-        printf("\n==============================\n");
-        Sleep(100);
-        if(send(sd, str, sizeof(str)+1, 0) == SOCKET_ERROR){
-            fprintf(stderr, "discard_cli: send() error!\n");
+    // set up chargen server
+    serv2.sin_family = AF_INET;
+    serv2.sin_addr.s_addr = inet_addr("127.0.0.1");
+    serv2.sin_port = htons(19); // chargen-server port
+    if( (sd2 = socket(AF_INET, SOCK_STREAM, 0)) == SOCKET_ERROR){
+        fprintf(stderr,"chargen_cli: can't open tcp socket\n");
+        exit(1);
+    }
+    if( connect(sd2, (struct sockaddr *) &serv2, sizeof(serv2)) == SOCKET_ERROR){
+        fprintf(stderr, "chargen_cli: can't connect to echo server\n");
+        exit(1);
+    }
+    start = time(NULL); // set the start timer
+    while(1){
+        if( (n = recv(sd2, str, MAXLINE, 0)) ==  SOCKET_ERROR){
+            fprintf(stderr,"chargen_cli: recv() error!\n");
             break;
         }
-        printf("送往 discard server 長度: %d bytes\n", n);
-        printf("\n==============================\n");
-
-        // 關掉 chargen server socket
-        closesocket(sd2);
+        else if(n == 0){
+            fprintf(stderr, "chargen_cli: connection closed\n");
+            break;
+        }
+        n = send(sd, str, strlen(str)+1, 0);
+        if(n == SOCKET_ERROR){
+            fprintf(stderr, "discard_cli: send() error\n");
+            break;
+        }
+        total += n;
+        in_loop = time(NULL); // get the current time everytime run the loop
+        if(difftime(in_loop, start) > 1.0){
+            printf("send to discard server: %d (bytes)\n", total);
+            total = 0;
+            start = time(NULL);
+        }
     }
-   closesocket(sd);
-   WSACleanup();
-   return 0;
+    closesocket(sd);
+    WSACleanup();
+    return 0;
 }
