@@ -8,5 +8,6 @@
 * Week4 : [筆記連結](https://hackmd.io/@gbSkzVymQsiREVFGHI7tpQ/Sykf7im-9)
 * Week5 : [筆記連結](https://hackmd.io/@gbSkzVymQsiREVFGHI7tpQ/ry4rE2RZc)
 * Week6 : [筆記連結](https://hackmd.io/@gbSkzVymQsiREVFGHI7tpQ/HylwQWdG9)
+* Week7 : [筆記連結](https://hackmd.io/@gbSkzVymQsiREVFGHI7tpQ/Syyc9y_7c)
 
 ###### tags: `Network Programming`
