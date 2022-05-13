@@ -12,5 +12,6 @@
 * Midterm : [考題連結](https://hackmd.io/@gbSkzVymQsiREVFGHI7tpQ/r1x70TmEq)
 * Week11 : [筆記連結](https://hackmd.io/@gbSkzVymQsiREVFGHI7tpQ/H1XQS3LS5)
 * Week12 : [筆記連結](https://hackmd.io/@gbSkzVymQsiREVFGHI7tpQ/HJSS8taBc)
+* Week13 : [筆記連結](https://hackmd.io/@gbSkzVymQsiREVFGHI7tpQ/H1r6booUc)
 
 ###### tags: `Network Programming`
